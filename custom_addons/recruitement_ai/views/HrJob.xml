@@ -1,0 +1,29 @@
+<odoo>
+    <data>
+        <!-- Hériter de la vue existante hr.job.form -->
+        <record id="view_hr_job_form_inherit" model="ir.ui.view">
+            <field name="name">hr.job.form</field>
+            <field name="model">hr.job</field>
+            <field name="inherit_id" ref="hr.view_hr_job_form"/>
+            <field name="arch" type="xml">
+                <!-- Ajouter un nouvel onglet "Critère" -->
+                <notebook position="inside">
+                    <page string="Critère" name="criteres_page">
+                        <group>
+                            <!-- Ajoutez ici les champs associés aux critères -->
+                            <field name="description_poste"/>
+                            <field name="competences"/>
+                            <field name="experiences_particulieres"/>
+                            <field name="experience_min"/>
+                            <field name="niveau_formation"/>
+                            <field name="diplomes_specifiques"/>
+                            <!-- Vous pouvez ajouter autant de champs que nécessaire -->
+                        </group>
+                    </page>
+                </notebook>
+            </field>
+        </record>
+
+
+    </data>
+</odoo>

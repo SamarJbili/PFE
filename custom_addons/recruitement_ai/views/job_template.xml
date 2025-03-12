@@ -1,0 +1,18 @@
+<odoo>
+    <template id="job_template" name="Job Details">
+        <t t-call="website.layout">
+            <div class="container">
+                <h1><t t-esc="job.name"/></h1>
+                <h3>Critères du Poste</h3>
+                <ul>
+                    <li><strong>Description :</strong> <t t-esc="job.description_poste"/></li>
+                    <li><strong>Compétences :</strong> <t t-esc="job.competences"/></li>
+                    <li><strong>Expériences Particulières :</strong> <t t-esc="job.experiences_particulieres"/></li>
+                    <li><strong>Expérience Minimale :</strong> <t t-esc="job.experience_min"/> ans</li>
+                    <li><strong>Niveau de Formation :</strong> <t t-esc="job.niveau_formation"/></li>
+                    <li><strong>Diplômes Spécifiques :</strong> <t t-esc="job.diplomes_specifiques"/></li>
+                </ul>
+            </div>
+        </t>
+    </template>
+</odoo>

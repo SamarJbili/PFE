@@ -1,1 +1,31 @@
 ICS
+
+
+
+1. Recruteur Admin
+Configurer les critères de sélection : Définir les critères de présélection des candidats (par exemple, compétences, expérience, etc.).
+Gérer les offres de recrutement : Créer et mettre à jour les offres d’emploi pour lesquelles les CV seront analysés.
+Superviser l’analyse des candidatures : Vérifier que les analyses faites par l'IA respectent les critères définis et sont pertinentes.
+2. Recruteur Utilisateur
+Soumettre une liste de CV : Importer ou soumettre les CV des candidats pour analyse.
+Effectuer une recherche : Rechercher des candidats en fonction de critères spécifiques (par exemple, compétences, expérience).
+Consulter les recommandations de l'outil : Consulr la présélection des CV faite par l'IA pour voir les meilleurs candidats pour un poste donné.
+Prendre des décisions de recrutement : Prendre la décision finale sur les candidats à inviter en entretien, en s’appuyant sur les recommandations de l’IA.
+3. Candidat
+Soumettre un CV : Téléverser son CV pour qu'il soit analysé par l'IA.
+Recevoir une réponse : Recevoir un retour (par exemple, notification de rejet ou invitation à un entretien, selon la présélection de l'IA).
+Mettre à jour son CV : Si nécessaire, mettre à jour son CV pour répondre aux critères de recrutement.
+4. AI Matching System (Système de Correspondance de l'IA)
+Analyser les CV soumis : Analyser les CV des candidats selon les critères définis par le recruteur admin (par exemple, compétences, expérience).
+Effectuer la présélection des CV : Présélectionner les meilleurs candidats en fonction des critères définis et des analyses réalisées.
+Fournir des recommandations : Donner des recommandations sur les meilleurs candidats pour chaque offre d'emploi.
+5. AI Evaluation Engine (Moteur d'Évaluation de l'IA)
+Analyser en détail les CV : Réaliser une analyse approfondie des CV en utilisant des modèles d'IA pour extraire des informations pertinentes et évaluer la qualité des candidats.
+Générer un score de correspondance : Créer un score ou une évaluation qui reflète la correspondance entre le CV et les critères de l'offre.
+Proposer des ajustements : Suggérer des améliorations ou des ajustements aux CV afin de mieux correspondre aux critères recherchés.
+En structurant les tâches de cette manière, tu pourras non seulement décrire les actions de chaque acteur dans le diagramme de cas d'utilisation, mais aussi bien organiser les processus de ton système.
+
+Cela te semble-t-il plus clair et utile pour ton projet ?
+
+
+

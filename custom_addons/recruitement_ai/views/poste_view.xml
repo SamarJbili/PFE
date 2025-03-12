@@ -1,0 +1,86 @@
+<odoo>
+    <!-- Enregistrement pour le champ 'description_poste' -->
+    <record id="poste_form_description" model="ir.ui.view">
+        <field name="name">hr.job.simple.form</field>
+        <field name="model">hr.job</field> <!-- Assurez-vous que c'est bien 'hr.job' et pas 'hr.job.form' -->
+        <field name="inherit_id" ref="hr_recruitment.hr_job_simple_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='name']" position="after">
+                <field name="description_poste"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Enregistrement pour le champ 'competences' -->
+    <record id="poste_form_competences" model="ir.ui.view">
+        <field name="name">hr.job.simple.form</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_job_simple_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='description_poste']" position="after">
+                <field name="competences"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Enregistrement pour le champ 'experiences_particulieres' -->
+    <record id="poste_form_experiences_particulieres" model="ir.ui.view">
+        <field name="name">hr.job.simple.form</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_job_simple_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='competences']" position="after">
+                <field name="experiences_particulieres"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Enregistrement pour le champ 'experience_min' -->
+    <record id="poste_form_experience_min" model="ir.ui.view">
+        <field name="name">hr.job.simple.form</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_job_simple_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='experiences_particulieres']" position="after">
+                <field name="experience_min"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Enregistrement pour le champ 'niveau_formation' -->
+    <record id="poste_form_niveau_formation" model="ir.ui.view">
+        <field name="name">hr.job.simple.form</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_job_simple_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='experience_min']" position="after">
+                <field name="niveau_formation"/>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Enregistrement pour le champ 'diplomes_specifiques' -->
+    <record id="poste_form_diplomes_specifiques" model="ir.ui.view">
+        <field name="name">hr.job.simple.form</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_job_simple_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//field[@name='niveau_formation']" position="after">
+                <field name="diplomes_specifiques"/>
+            </xpath>
+
+        </field>
+    </record>
+
+</odoo>
