@@ -51,13 +51,7 @@ except ImportError:
     _logger.warning("pytesseract or PIL not available. OCR features will be disabled.")
 
 # Optional translation support
-try:
-    from googletrans import Translator
 
-    TRANSLATION_AVAILABLE = True
-except ImportError:
-    TRANSLATION_AVAILABLE = False
-    _logger.warning("googletrans not available. Translation features will be disabled.")
 
 
 # Fonction pour extraire du texte d'une image (OCR)
@@ -108,17 +102,7 @@ def extract_docx_text(docx_file):
 
 
 # Fonction pour traduire le texte extrait
-def translate_text(text, target_language='fr'):
-    if not TRANSLATION_AVAILABLE:
-        return text
 
-    try:
-        translator = Translator()
-        translated = translator.translate(text, dest=target_language)
-        return translated.text
-    except Exception as e:
-        _logger.error(f"Translation error: {str(e)}")
-        return text
 
 
 # Fonction pour extraire des informations d'un texte (CV)
@@ -173,12 +157,15 @@ def process_cv(cv_file, file_type='pdf'):
         else:
             raise ValueError("Format de fichier non supporté. Utilisez 'pdf' ou 'docx'.")
 
+        # Log le texte extrait pour débogage
+        _logger.info(f"Texte extrait (50 premiers caractères): {cv_text[:50]}")
+
         # Traduction du texte extrait si nécessaire
-        if TRANSLATION_AVAILABLE and cv_text:
-            cv_text = translate_text(cv_text, target_language='fr')
+
 
         # Extraction des informations
         cv_info = extract_cv_info(cv_text)
+        _logger.info(f"Informations extraites du CV: {cv_info}")
 
         # Convertir en DataFrame
         cv_df = pd.DataFrame([cv_info])
@@ -186,5 +173,7 @@ def process_cv(cv_file, file_type='pdf'):
 
     except Exception as e:
         _logger.error(f"Error processing CV: {str(e)}")
+        import traceback
+        _logger.error(traceback.format_exc())
         # Return empty DataFrame with correct structure
         return pd.DataFrame([{"Nom": "", "Expérience": "", "Compétences": "", "Formation": ""}])
