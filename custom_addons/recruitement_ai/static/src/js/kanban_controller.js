@@ -1,5 +1,3 @@
-/** @odoo-module **/
-
 import { KanbanController } from "@web/views/kanban/kanban_controller";
 import { patch } from "@web/core/utils/patch";
 import { useService } from "@web/core/utils/hooks";
@@ -7,10 +5,6 @@ import { rpc } from "@web/core/network/rpc";
 
 // Store the original setup method before patching
 const originalSetup = KanbanController.prototype.setup;
-
-// Mode test - mettre à true pour les tests, false en production
-const TEST_MODE = true;
-const TEST_JOB_ID = 2; // ID de test pour développement
 
 patch(KanbanController.prototype, {
     setup() {
@@ -33,13 +27,30 @@ patch(KanbanController.prototype, {
     },
 
     async runAIAnalysis() {
-        // En mode test, utilisez l'ID de test; sinon, obtenez l'ID sélectionné
-        let activeId = TEST_MODE ? TEST_JOB_ID : (this.model && this.model.root ? this.model.root.resId : null);
+        let jobId = 0;
 
-        console.log("ID du poste utilisé:", activeId);
+        // Récupérer le chemin complet de l'URL
+        const pathName = window.location.pathname;
+        console.log("URL path:", pathName);
 
-        if (!activeId) {
-            this.notificationService.add('Veuillez sélectionner une offre d\'emploi', {
+        // Format attendu: /odoo/recruitment/ID/action-XXX
+        const recruitmentPathRegex = /\/(?:odoo\/)?recruitment\/(\d+)/;
+        const match = pathName.match(recruitmentPathRegex);
+
+        if (match && match[1]) {
+            jobId = parseInt(match[1]);
+            console.log("ID extrait du chemin:", jobId);
+        }
+
+        // En cas d'échec, essayer de récupérer depuis le modèle
+        if (!jobId && this.model && this.model.root) {
+            jobId = this.model.root.resId;
+            console.log("ID récupéré du modèle:", jobId);
+        }
+
+        // Si jobId est undefined ou vide, ajouter un mécanisme de gestion d'erreur
+        if (!jobId) {
+            this.notificationService.add("Impossible de déterminer l'ID de l'offre d'emploi", {
                 title: 'Erreur',
                 type: 'danger',
             });
@@ -53,41 +64,60 @@ patch(KanbanController.prototype, {
         });
 
         try {
-            const result = await rpc("/recruitment/analyze_cvs", {
-                job_id: activeId
+            // Première étape : analyse des CVs
+            const analysisResult = await rpc("/recruitment/analyze_cvs", {
+                job_id: jobId
             });
 
-            console.log("Résultat de l'analyse:", result);
+            console.log("Résultat de l'analyse:", analysisResult);
 
-            // Handle the response based on the actual backend structure
-            if (result.success) {
-                if (result.csv_url) {
-                    // If successful and has a CSV URL, download or redirect to it
-                    window.location.href = result.csv_url;
-                    this.notificationService.add(`Analyse terminée (${result.cv_count || 0} CVs traités), téléchargement du fichier CSV en cours...`, {
-                        title: 'Succès',
-                        type: 'success',
-                    });
-                } else {
-                    this.notificationService.add('Analyse terminée mais aucun lien CSV généré', {
-                        title: 'Avertissement',
-                        type: 'warning',
-                    });
-                }
-            } else {
-                // Show the error message from the backend
-                this.notificationService.add(result.message || 'Une erreur inconnue est survenue', {
-                    title: 'Information',
-                    type: 'info',
+            if (!analysisResult.success) {
+                throw new Error(analysisResult.message || 'Échec de l\'analyse des CVs');
+            }
+
+            // Deuxième étape : évaluation et calcul des scores
+            const scoringResult = await rpc("/recruitment/evaluate_cvs/" + jobId, {});
+
+            console.log("Résultat de l'évaluation des scores:", scoringResult);
+
+            if (!scoringResult.success) {
+                throw new Error(scoringResult.message || 'Échec de l\'évaluation des scores');
+            }
+
+            // Traiter et afficher les résultats des scores
+            this.displayScoreResults(scoringResult.results);
+
+            // Télécharger le fichier CSV s'il est disponible
+            if (analysisResult.csv_url) {
+                window.location.href = analysisResult.csv_url;
+                this.notificationService.add(`Analyse terminée (${analysisResult.cv_count || 0} CVs traités), téléchargement du fichier CSV en cours...`, {
+                    title: 'Succès',
+                    type: 'success',
                 });
             }
         } catch (error) {
-            console.error("Erreur lors de l'analyse:", error);
-            // Show error
-            this.notificationService.add(`Une erreur est survenue lors de l'analyse: ${error}`, {
+            console.error("Erreur lors de l'analyse et de l'évaluation:", error);
+            this.notificationService.add(`Une erreur est survenue: ${error.message}`, {
                 title: 'Erreur',
                 type: 'danger',
             });
         }
     },
+
+    displayScoreResults(results) {
+        // Afficher une notification avec un résumé
+        const topCandidates = results.slice(0, 3);
+        const summaryMessage = topCandidates.map(
+            (candidate, index) => `${index + 1}. ${candidate.Nom || 'Candidat'}: ${candidate.score || 0} points`
+        ).join('\n');
+
+        this.notificationService.add(
+            `Top 3 candidats:\n${summaryMessage}`,
+            {
+                title: 'Résultats de l\'analyse',
+                type: 'success',
+                sticky: true
+            }
+        );
+    }
 });

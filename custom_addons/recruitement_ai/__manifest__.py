@@ -11,17 +11,15 @@
         'hr_recruitment'
     ],
     'data': [
-        'views/poste_view.xml',
-        'views/HrJob.xml',
-        'views/job_template.xml',
-        'views/tableau.xml',
-        'views/tableau_template.xml',
-        'security/ir.model.access.csv'
+        'views/onglecritere.xml',
+        'views/score.xml',
 
 
     ],
 'controllers': [
     'controllers/Tableauxdebord_Controllers.py',
+    'controllers/RecruitmentAnalysisController.py',
+
 ],
 'assets': {
         'web.assets_backend': [
@@ -29,7 +27,9 @@
             'recruitement_ai/static/src/xml/kanban_controller.xml'
         ],
     },
+    'installable': True,
     'auto_install': False,
     'application': True,
     'sequence': 1  # Corrected: integer, not string
 }
+

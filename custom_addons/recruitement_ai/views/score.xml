@@ -1,0 +1,29 @@
+
+<odoo>
+    <data>
+        <record id="view_applicants_list_inherit_score" model="ir.ui.view">
+            <field name="name">hr.applicant.list.inherit.score</field>
+            <field name="model">hr.applicant</field>
+            <field name="inherit_id" ref="hr_recruitment.crm_case_tree_view_job"/>
+            <field name="arch" type="xml">
+                <!-- Ajouter le champ score après le champ recruteur -->
+                <field name="user_id" position="after">
+                    <field name="score" optional="show"/>
+                </field>
+            </field>
+        </record>
+          <!-- Form View -->
+        <record id="hr_applicant_view_form_inherit" model="ir.ui.view">
+            <field name="name">hr.applicant.form.inherit.score</field>
+            <field name="model">hr.applicant</field>
+            <field name="inherit_id" ref="hr_recruitment.hr_applicant_view_form"/>
+            <field name="arch" type="xml">
+                <field name="job_id" position="after">
+                    <field name="score" optional="show"/>
+                </field>
+            </field>
+        </record>
+
+
+    </data>
+</odoo>
