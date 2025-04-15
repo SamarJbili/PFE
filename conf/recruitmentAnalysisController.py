@@ -13,9 +13,7 @@ from fuzzywuzzy import process
 
 import pandas as pd
 # Import the AI recruitment functions
-from ..utils import ai_recruitment
-from ..utils.ai_recruitment import calculate_score
-
+from conf import ai_recruitment
 
 _logger = logging.getLogger(__name__)
 
@@ -87,19 +85,32 @@ class RecruitmentAnalysisController(http.Controller):
                                                   attachment.name.lower().endswith(
                                                       '.doc') or attachment.name.lower().endswith('.docx')):
                         file_type = 'docx'
+                    # Ajouter la prise en charge des fichiers image
+                    elif attachment.mimetype and ('image' in attachment.mimetype or
+                                                  any(attachment.name.lower().endswith(ext) for ext in
+                                                      ['.png', '.jpg', '.jpeg'])):
+                        # Determiner précisément le type d'image
+                        if 'png' in attachment.mimetype or attachment.name.lower().endswith('.png'):
+                            file_type = 'png'
+                        elif 'jpeg' in attachment.mimetype or attachment.name.lower().endswith(
+                                '.jpg') or attachment.name.lower().endswith('.jpeg'):
+                            file_type = 'jpg'
                     else:
                         # Si on ne peut pas déterminer par MIME, essayer par extension
                         if attachment.name.lower().endswith('.pdf'):
                             file_type = 'pdf'
                         elif attachment.name.lower().endswith('.docx') or attachment.name.lower().endswith('.doc'):
                             file_type = 'docx'
+                        elif attachment.name.lower().endswith('.png'):
+                            file_type = 'png'
+                        elif attachment.name.lower().endswith('.jpg') or attachment.name.lower().endswith('.jpeg'):
+                            file_type = 'jpg'
 
                     if not file_type:
                         _logger.warning(f"Type de fichier non supporté: {attachment.mimetype}, nom: {attachment.name}")
                         os.remove(file_path)
                         os.rmdir(temp_dir)
                         continue
-
                     # Traiter le CV avec le module AI
                     _logger.info(f"Calling process_cv with {file_path}, type: {file_type}")
                     cv_df = ai_recruitment.process_cv(file_path, file_type)
@@ -137,10 +148,10 @@ class RecruitmentAnalysisController(http.Controller):
                                 cv_data['education'] = row['education']
                             elif 'education' in cv_df.columns and not pd.isna(row['education']):
                                 cv_data['education'] = row['education']
-                        if 'experience_years' in cv_df.columns:
-                            experience_value = row.get('experience_years')
-                            if pd.notna(experience_value) and experience_value:
-                                cv_data['experience_years'] = experience_value
+
+                        if 'experience_years' in cv_df.columns and not pd.isna(row['experience_years']) and row[
+                            'experience_years']:
+                            cv_data['experience_years'] = row['experience_years']
 
                         if 'location' in cv_df.columns and not pd.isna(row['location']) and row['location']:
                             cv_data['location'] = row['location']
@@ -250,7 +261,45 @@ class RecruitmentAnalysisController(http.Controller):
             _logger.warning(f"Fichier CSV non trouvé à {file_path}")
         return None
 
+    def calculate_score(self, candidate, criteria):
+        score = 0
+        _logger.info(f"Calcul du score pour le candidat : {candidate.get('name')}")
 
+        # Expérience (40%)
+        experience = float(candidate.get('experience_years', 0))
+        if experience >= criteria.get('experience_years', 0):
+            score += 40
+            _logger.info(f"Expérience : {experience} années -> score ajouté : 40")
+
+        # Diplôme (30%) - Amélioration de la correspondance
+        candidate_education = str(candidate.get('education', '')).lower().replace(' ', '').replace('+', '')
+        job_education = str(criteria.get('education', '')).lower().replace('bac_', 'bac').replace('_', ' ')
+
+        education_mapping = {
+            'bac+3': ['bac+3', 'bac 3', 'licence', 'bachelors'],
+            'master': ['master', 'm1', 'm2', 'postgraduate'],
+            'doctorat': ['doctorat', 'phd', 'doctorate'],
+            'autre': ['autre', 'other']
+        }
+
+        for level, variants in education_mapping.items():
+            if job_education == level and any(variant in candidate_education for variant in variants):
+                score += 30
+                _logger.info(f"Diplôme requis trouvé : {candidate['education']} -> score ajouté : 30")
+                break
+
+        # Localisation (20%)
+        if 'location' in candidate and criteria.get('location', '').lower() in str(candidate['location']).lower():
+            score += 20
+            _logger.info(f"Localisation : {candidate['location']} -> score ajouté : 20")
+
+        # Bonus (10%)
+        if 'phone' in candidate and 'email' in candidate:
+            score += 10
+            _logger.info(f"Candidat a un téléphone et un email -> score ajouté : 10")
+
+        _logger.info(f"Score total pour {candidate['Nom']} : {score}")
+        return score
 
     @http.route('/recruitment/evaluate_cvs/<int:job_id>', type='json', auth='user')
     def evaluate_cvs(self, job_id):
@@ -268,7 +317,7 @@ class RecruitmentAnalysisController(http.Controller):
         for _, row in df.iterrows():
             candidate = row.to_dict()
             _logger.info(f"Traitement du candidat : {candidate.get('Nom')}")
-            candidate['score'] = calculate_score(candidate, criteria)
+            candidate['score'] = self.calculate_score(candidate, criteria)
             results.append(candidate)
 
         # Trier les résultats par score décroissant

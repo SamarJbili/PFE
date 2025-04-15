@@ -13,10 +13,7 @@ from PIL import Image
 import pytesseract
 import pdfplumber
 import traceback
-import logging
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.feature_extraction.text import TfidfVectorizer
-import spacy
+
 from odoo.http import request
 
 # Configuration du logger
@@ -69,6 +66,9 @@ def clean_text(text):
         return ""
     return re.sub(r'\s+', ' ', text).strip()
 
+pdf_file = '/home/jbilisamar/Téléchargements/aHR0cHM6Ly9jZG4uZW5oYW5jdi5jb20vcHJlZGVmaW5lZC1leGFtcGxlcy9KcnRXZnE3NkY5ZnpGdERDMUNPTXhibVA4ZnRjTUhiclRsUkZDTmZaL2ltYWdlLnBuZw~~.png'
+text = extract_ocr_text(pdf_file)
+print(text)
 
 
 def save_text_to_file(text, filename="extracted_text.txt"):
@@ -283,79 +283,31 @@ def extract_experience_years(cv_text):
     return total_years if total_years > 0 else None
 
 def extract_location(cv_text):
-    """
-    Extract location information from CV text using advanced pattern matching.
-    Returns a string containing the location or None if no location is found.
-    """
-    if not cv_text or not isinstance(cv_text, str):
-        return None
-
-    # List of countries and major cities (deduplicated)
-    countries = [
-        "France", "Germany", "Allemagne", "Tunisia", "Tunisie", "Morocco", "Maroc",
-        "Algeria", "Algérie", "United States", "USA", "US", "États-Unis", "Canada", "Belgium",
-        "Belgique", "Switzerland", "Suisse", "Italy", "Italie", "Spain", "Espagne", "UK",
-        "United Kingdom", "Royaume-Uni", "Netherlands", "Pays-Bas", "Luxembourg", "Portugal",
-        "Ireland", "Irlande", "Sweden", "Suède", "Norway", "Norvège", "Denmark", "Danemark",
-        "Finland", "Finlande", "Greece", "Grèce", "Austria", "Autriche", "Poland", "Pologne",
-        "Czech Republic", "République Tchèque", "Japan", "Japon", "China", "Chine", "Australia",
-        "Australie", "New Zealand", "Nouvelle-Zélande", "Brazil", "Brésil", "Mexico", "Mexique",
-        "Argentina", "Argentine", "Chile", "Chili", "India", "Inde", "Russia", "Russie"
-    ]
-
-    major_cities = list(set([
-        "Paris", "London", "Londres", "Berlin", "Madrid", "Rome", "Roma", "Brussels", "Bruxelles",
-        "Amsterdam", "Vienna", "Vienne", "Zurich", "Geneva", "Genève", "Milan", "Milano",
-        "Barcelona", "Barcelone", "Lisbon", "Lisbonne", "Dublin", "Stockholm", "Oslo", "Copenhagen",
-        "Copenhague", "Helsinki", "Athens", "Athènes", "Warsaw", "Varsovie", "Prague", "Tokyo",
-        "Beijing", "Pékin", "Shanghai", "Sydney", "Melbourne", "Auckland", "São Paulo",
-        "Mexico City", "Buenos Aires", "Santiago", "Mumbai", "Delhi", "Moscow", "Moscou",
-        "New York", "Los Angeles", "Chicago", "Toronto", "Montreal", "Montréal", "Vancouver",
-        "Munich", "München", "Frankfurt", "Hamburg", "Lyon", "Marseille", "Bordeaux",
-        "Toulouse", "Lille", "Nice", "Nantes", "Strasbourg", "Montpellier", "Rennes", "Reims",
-        "Toulon", "Grenoble", "Dijon", "Tunis", "Sfax", "Sousse", "Casablanca", "Rabat",
-        "Marrakech", "Alger", "Oran", "Luxembourg", "Dakar", "Abidjan", "Bamako", "Yaoundé", "Douala"
-    ]))
-
-    # Build pattern from sorted locations
-    locations = sorted(set(countries + major_cities), key=len, reverse=True)
-    locations_pattern = "|".join(map(re.escape, locations))
-
     location_patterns = [
-        r'([A-Z][a-zÀ-ÿ]+(?:[\s-][A-Z][a-zÀ-ÿ]+)*)\s*,\s*(' + locations_pattern + r')',
-        r'([A-Z][a-zÀ-ÿ]+(?:[\s-][A-Z][a-zÀ-ÿ]+)*)\s*-\s*(' + locations_pattern + r')',
-        r'(?:^|\(|\n)\s*(' + locations_pattern + r')',
-        r'(?:Location|Address|Adresse|Localisation|Based in|Located in|Living in|Lieu|Ville)[\s:]*([A-Z][a-zÀ-ÿ]+(?:[\s,.-][A-Z][a-zÀ-ÿ]+)*)',
-        r'(?:Born in|Native of|Originaire de|De)\s+([A-Z][a-zÀ-ÿ]+(?:[\s-][A-Z][a-zÀ-ÿ]+)*)',
-        r'(Remote|Télétravail|Work from home|Home office|Hybrid|Hybride)[\s-]*([A-Z][a-zÀ-ÿ]*(?:[\s-][A-Z][a-zÀ-ÿ]+)*)?',
-        r'\b(' + locations_pattern + r')\b'
+        r'(?:Adresse|Address|Location|Localisation)\s*(?::|;)?\s*([^,\n]+(?:,\s*[^,\n]+){0,3})',
+        r'(?:\n|^)([A-Z][a-zA-ZÀ-ÿ\s]+(?:,\s*[A-Z][a-zA-ZÀ-ÿ\s]+){1,2})(?:\n|$)',
+        r'(\d+\s*(?:rue|avenue|boulevard|bd|place)\s+[^,\n]+(?:,\s*[^,\n]+){0,3})'
     ]
 
     for pattern in location_patterns:
-        matches = re.findall(pattern, cv_text, re.IGNORECASE)
+        matches = re.search(pattern, cv_text, re.IGNORECASE)
         if matches:
-            match = matches[0]
-            if isinstance(match, tuple):
-                parts = [p.strip() for p in match if p.strip()]
-                if parts:
-                    return ", ".join(parts)
-            elif isinstance(match, str):
-                return match.strip()
+            location = matches.group(1).strip()
+            if not re.search(r'@|\+|\d{2}[\s.-]?\d{2}[\s.-]?\d{2}', location):
+                parts = [part.strip() for part in location.split(',') if part.strip()]
+                if len(parts) <= 3:
+                    return ', '.join(parts)
 
-    # Fallback: postal code formats
-    postal_code_patterns = [
-        r'([A-Z][a-zÀ-ÿ]+(?:[\s-][A-Z][a-zÀ-ÿ]+)*)\s+\d{5}',  # City + 5-digit postal code
-        r'([A-Z][a-zÀ-ÿ]+(?:[\s-][A-Z][a-zÀ-ÿ]+)*)\s+[A-Z]\d[A-Z]\s*\d[A-Z]\d',  # Canada
-        r'([A-Z][a-zÀ-ÿ]+(?:[\s-][A-Z][a-zÀ-ÿ]+)*)\s+[A-Z]{1,2}\d{1,2}[A-Z]?\s*\d[A-Z]{2}',  # UK
-    ]
+    cities = ["Paris", "Lyon", "Marseille", "Tunis", "Sfax", "Sousse", "Casablanca", "Rabat", "Alger", "Oran"]
 
-    for pattern in postal_code_patterns:
-        postal_matches = re.findall(pattern, cv_text, re.IGNORECASE)
-        if postal_matches:
-            return postal_matches[0].strip()
+    for city in cities:
+        city_pattern = rf'{city}\s*(?:,\s*|\s+-\s*|\s+)?'
+        matches = re.search(city_pattern, cv_text, re.IGNORECASE)
+        if matches:
+            location = matches.group(0).strip()
+            return location
 
     return None
-
 def extract_education_level(cv_text):
     if not cv_text or not isinstance(cv_text, str):
         return None
@@ -542,7 +494,8 @@ def extract_skills(cv_text):
         # Sections administratives et personnelles
         'formation', 'éducation', 'education', 'expérience', 'experience',
         'formation académique', 'études', 'diplôme', 'certification',
-        'projet académique', 'vie associative', 'langue', 'competence morale',
+        'projet académique', 'projets académiques', 'projet de fin d\'études', 'pfe',
+        'vie associative', 'langue', 'competence morale',
 
         # Sections professionnelles
         'emploi', 'poste', 'position', 'stage', 'alternance',
@@ -804,7 +757,7 @@ def process_cv(cv_file, file_type='pdf', candidate_id=None):
     nom_candidat = None
 
     try:
-        # 1. PRIORITÉ 1: Récupérer le nom directement depuis l'objet candidat Odoo
+        # 1. PRIORITÉ 1: Récupérer le nom depuis l'objet candidat Odoo
         if candidate_id:
             try:
                 candidate = request.env['hr.applicant'].browse(candidate_id)
@@ -814,22 +767,34 @@ def process_cv(cv_file, file_type='pdf', candidate_id=None):
             except Exception as e:
                 logger.error(f"Erreur lors de la récupération du candidat Odoo: {str(e)}")
 
-        # 2. Extraire le texte du CV selon le type de fichier
-        if file_type.lower() == 'pdf':
+        # Nettoyer et extraire l'extension si le type contient un slash (ex: "image/png")
+        file_type = file_type.strip()
+        if '/' in file_type:
+            file_type = file_type.split('/')[-1].lower()
+        logger.info(f"Type de fichier normalisé: {file_type}")
+
+        if file_type == 'pdf':
             cv_text = extract_pdf_text(cv_file)
-        elif file_type.lower() in ['docx', 'doc']:
+
+        elif file_type in ['docx', 'doc']:
             cv_text = extract_docx_text(cv_file)
-        elif file_type.lower() in ['jpg', 'jpeg', 'png']:
-            cv_text = extract_ocr_text(cv_file)
+
+        elif file_type in ['jpg', 'jpeg', 'png']:
+            try:
+                image = Image.open(cv_file)
+                cv_text = pytesseract.image_to_string(image, lang='fra')
+            except Exception as e:
+                logger.error(f"OCR error: {e}")
+                cv_text = ""
         else:
-            raise ValueError("Format de fichier non supporté. Utilisez 'pdf', 'docx' ou des images.")
+            # Si le type ne correspond à aucun attendu, lever une exception
+            raise ValueError(f"Format de fichier non supporté. Utilisez 'pdf', 'docx' ou des images (jpg/png), obtenu: {file_type}")
 
-        logger.info(f"Texte extrait (50 premiers caractères): {cv_text[:50]}")
-
-        # Extraire les informations de base du CV
+        logger.info(f"Texte extrait (50 premiers caractères): {cv_text[:50].replace('\n', ' ')}")
+        # Extraire les informations du CV
         cv_info = extract_cv_info(cv_text)
 
-        # 3. Si le nom n'est pas encore défini, essayer de l'extraire du contenu du CV
+        # 3. Extraction du nom depuis le contenu du CV si nécessaire
         if not nom_candidat or nom_candidat == "aa":
             try:
                 extracted_name = extract_name_from_cv(cv_text)
@@ -839,17 +804,15 @@ def process_cv(cv_file, file_type='pdf', candidate_id=None):
             except Exception as e:
                 logger.error(f"Erreur lors de l'extraction du nom depuis le CV: {str(e)}")
 
-        # 4. Si toujours pas de nom, essayer d'extraire du nom du fichier
+        # 4. Extraction du nom depuis le nom du fichier si toujours absent
         if not nom_candidat or nom_candidat == "aa":
             try:
                 filename = os.path.basename(cv_file)
-                # Plusieurs patterns pour extraire un nom du fichier
                 patterns = [
-                    r'^(?:CV[_\s-]*)?([A-Za-z\s\'-]+?)(?:[\s_-]*CV)?\.',  # CV_Nom.pdf ou Nom_CV.pdf
-                    r'([A-Za-z\s\'-]+?)[\s_-]+(?:resume|cv|curriculum)',  # Nom resume.pdf
-                    r'([A-Za-z\s\'-]{3,30})\.'  # Simplement Nom.pdf (min 3 chars)
+                    r'^(?:CV[_\s-]*)?([A-Za-z\s\'-]+?)(?:[\s_-]*CV)?\.',  # Exemple: CV_Nom.pdf ou Nom_CV.pdf
+                    r'([A-Za-z\s\'-]+?)[\s_-]+(?:resume|cv|curriculum)',      # Exemple: Nom_resume.pdf
+                    r'([A-Za-z\s\'-]{3,30})\.'                                # Exemple: Nom.pdf (min 3 chars)
                 ]
-
                 for pattern in patterns:
                     name_match = re.search(pattern, filename, re.IGNORECASE)
                     if name_match:
@@ -861,11 +824,10 @@ def process_cv(cv_file, file_type='pdf', candidate_id=None):
             except Exception as e:
                 logger.error(f"Erreur lors de l'extraction du nom depuis le fichier: {str(e)}")
 
-        # 5. Appliquer le nom trouvé ou conserver celui qui était dans cv_info s'il est valide
+        # 5. Appliquer le nom récupéré ou extraire celui déjà présent dans cv_info
         if nom_candidat and nom_candidat != "aa":
             cv_info["Nom"] = nom_candidat
         elif cv_info.get("Nom") and cv_info["Nom"] != "aa" and cv_info["Nom"] != "Candidat Sans Nom":
-            # On garde le nom déjà extrait par extract_cv_info si valide
             logger.info(f"Utilisation du nom déjà extrait: {cv_info['Nom']}")
         else:
             cv_info["Nom"] = "Candidat Sans Nom"
@@ -879,8 +841,6 @@ def process_cv(cv_file, file_type='pdf', candidate_id=None):
                 cv_info["experience_years"] = 0
 
         logger.info(f"Informations extraites du CV: {cv_info}")
-
-        # Retourne le DataFrame avec les informations extraites
         return pd.DataFrame([cv_info])
 
     except Exception as e:
@@ -896,107 +856,3 @@ def process_cv(cv_file, file_type='pdf', candidate_id=None):
             "skills": [],
             "languages": ""
         }])
-
-    _logger = logging.getLogger(__name__)
-
-
-
-
-# Initialisation du modèle NLP spaCy pour l'analyse des textes
-
-_logger = logging.getLogger(__name__)
-
-# Fonction pour calculer la similarité de texte (par exemple, résumé du CV et description de l'offre)
-def calculate_text_similarity(text1, text2):
-    """
-    Utilise le calcul de similarité cosinus pour comparer deux textes.
-    """
-    try:
-        french_stop_words = ['de', 'la', 'le', 'les', 'des', 'un', 'une', 'en', 'et', 'à']
-        # Convertir les textes en vecteurs TF-IDF
-        vectorizer = TfidfVectorizer(stop_words=french_stop_words)
-        tfidf_matrix = vectorizer.fit_transform([text1, text2])
-        return cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])[0][0]
-    except Exception as e:
-        _logger.error(f"Erreur lors du calcul de similarité de texte : {e}")
-        return 0
-
-def calculate_score(candidate, criteria):
-    """
-    Calcule un score basé sur des critères avancés : expérience, éducation, compétences et texte.
-    """
-    score = 0
-    total = 0
-
-    # Pondération personnalisée (tu peux ajuster ces poids)
-    weights = {
-        'experience_years': 0.25,
-        'education': 0.2,
-        'skills': 0.25,
-        'text_similarity': 0.3
-    }
-
-    # --- Expérience ---
-    try:
-        candidate_exp = float(candidate.get('experience_years', 0))
-        required_exp = float(criteria.get('experience_years', 0))
-
-        if candidate_exp >= required_exp:
-            score += weights['experience_years'] * 100
-        else:
-            score += weights['experience_years'] * (candidate_exp / required_exp) * 100
-        total += weights['experience_years']
-    except Exception as e:
-        _logger.warning(f"Erreur expérience : {e}")
-
-    # --- Éducation ---
-    education_levels = {
-        'autre': 0,
-        'bac_plus_3': 1,
-        'master': 2,
-        'doctorat': 3,
-    }
-
-    try:
-        candidate_edu = education_levels.get(str(candidate.get('education', '')).lower(), 0)
-        required_edu = education_levels.get(str(criteria.get('education', '')).lower(), 0)
-
-        if candidate_edu >= required_edu:
-            score += weights['education'] * 100
-        else:
-            score += weights['education'] * (candidate_edu / required_edu) * 100 if required_edu > 0 else 0
-        total += weights['education']
-    except Exception as e:
-        _logger.warning(f"Erreur éducation : {e}")
-
-    # --- Compétences ---
-    try:
-        required_skills = set(criteria.get('skills', []))
-        candidate_skills = set(candidate.get('skills', []))
-
-        matching_skills = required_skills.intersection(candidate_skills)
-        skill_match_ratio = len(matching_skills) / len(required_skills) if required_skills else 1
-
-        score += weights['skills'] * skill_match_ratio * 100
-        total += weights['skills']
-    except Exception as e:
-        _logger.warning(f"Erreur compétences : {e}")
-
-    # --- Similarité de texte (Résumé ou Lettre de Motivation) ---
-    try:
-        # Texte provenant de l'offre d'emploi (exemple)
-        job_description = criteria.get('job_description', "")
-
-        # Texte provenant du CV (par exemple résumé)
-        candidate_summary = candidate.get('summary', "")
-
-        # Calculer la similarité des textes
-        text_sim_score = calculate_text_similarity(candidate_summary, job_description)
-        score += weights['text_similarity'] * text_sim_score * 100
-        total += weights['text_similarity']
-    except Exception as e:
-        _logger.warning(f"Erreur analyse de texte : {e}")
-
-    # Calcul du score final normalisé
-    final_score = round(score / total, 2) if total > 0 else 0
-    return final_score
