@@ -1,0 +1,36 @@
+<odoo>
+    <data noupdate="0">
+
+        <record id="access_hr_applicant_candidate" model="ir.model.access">
+    <field name="name">access_hr_applicant_candidate</field>
+    <field name="model_id" ref="hr_recruitment.model_hr_applicant"/>
+    <field name="group_id" ref="base.group_portal"/>
+    <field name="perm_read" eval="1"/>
+    <field name="perm_write" eval="0"/>
+    <field name="perm_create" eval="0"/>
+    <field name="perm_unlink" eval="0"/>
+</record>
+<record id="access_hr_competence" model="ir.model.access">
+    <field name="name">access_hr_competence</field>
+    <field name="model_id" ref="model_hr_competence"/>
+    <field name="group_id" ref="base.group_user"/>
+    <field name="perm_read" eval="1"/>
+    <field name="perm_write" eval="1"/>
+    <field name="perm_create" eval="1"/>
+    <field name="perm_unlink" eval="1"/>
+</record>
+
+<record id="access_res_language_custom" model="ir.model.access">
+    <field name="name">access_res_language_custom</field>
+    <field name="model_id" ref="model_res_language_custom"/>
+    <field name="group_id" ref="base.group_user"/>
+    <field name="perm_read" eval="1"/>
+    <field name="perm_write" eval="1"/>
+    <field name="perm_create" eval="1"/>
+    <field name="perm_unlink" eval="1"/>
+</record>
+
+
+
+    </data>
+</odoo>

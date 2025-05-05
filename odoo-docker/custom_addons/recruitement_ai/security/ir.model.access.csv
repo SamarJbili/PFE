@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_applicant_candidate,access_hr_applicant_candidate,hr_recruitment.model_hr_applicant,base.group_portal,1,0,0,0
+access_res_language_custom,res.language.custom,model_res_language_custom,base.group_user,1,1,1,1
+access_hr_competence,access_hr_competence,model_hr_competence,base.group_user,1,1,1,1

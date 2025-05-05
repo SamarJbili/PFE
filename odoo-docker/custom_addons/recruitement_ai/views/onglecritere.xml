@@ -1,0 +1,130 @@
+<odoo>
+    <!-- Première partie : Héritage de la vue formulaire pour ajouter des dates -->
+    <record id="view_hr_job_form_inherit" model="ir.ui.view">
+        <field name="name">hr.job.form.inherit</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='description']" position="after">
+                <group>
+                    <field name="date_debut_poste" string="Date de début de poste" required="1" widget="datetime"/>
+                    <field name="date_fin_poste" string="Date de fin de poste" required="1" widget="datetime"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Deuxième partie : Héritage pour ajouter une nouvelle page "Critères" -->
+    <record id="view_hr_job_form_inherit_criteria" model="ir.ui.view">
+        <field name="name">hr.job.form.inherit.criteria</field>
+        <field name="model">hr.job</field>
+        <field name="inherit_id" ref="hr.view_hr_job_form"/>
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="Critères" name="criteres_page">
+                    <group>
+                        <!-- Années d'expérience -->
+                        <group>
+                            <field name="experience_years"/>
+                            <div class="oe_inline">
+                                <label for="is_experience_years_required"/>
+                                <field name="is_experience_years_required" class="oe_checkbox"/>
+                            </div>
+                            <div class="oe_inline">
+                                <label for="experience_years_importance" string="Importance"/>
+                                <field name="experience_years_importance"/>
+                            </div>
+                        </group>
+
+                        <!-- Niveau de formation requis -->
+                        <group>
+                            <field name="education"/>
+                            <div class="oe_inline">
+                                <label for="is_education_required"/>
+                                <field name="is_education_required" class="oe_checkbox"/>
+                            </div>
+                            <div class="oe_inline">
+                                <label for="education_importance" string="Importance"/>
+                                <field name="education_importance"/>
+                            </div>
+                        </group>
+
+                        <!-- Lieu -->
+                        <group>
+                            <field name="location"/>
+                            <div class="oe_inline">
+                                <label for="is_location_required"/>
+                                <field name="is_location_required" class="oe_checkbox"/>
+                            </div>
+                            <div class="oe_inline">
+                                <label for="location_importance" string="Importance"/>
+                                <field name="location_importance"/>
+                            </div>
+                        </group>
+
+                        <!-- Compétences -->
+                        <group>
+                            <field name="skills"/>
+                            <div class="oe_inline">
+                                <label for="is_skills_required"/>
+                                <field name="is_skills_required" class="oe_checkbox"/>
+                            </div>
+                            <div class="oe_inline">
+                                <label for="skills_importance" string="Importance"/>
+                                <field name="skills_importance"/>
+                            </div>
+                        </group>
+
+                        <!-- Langues Requises -->
+                        <group string="Langues Requises">
+                            <field name="language_ids" widget="many2many_kanban">
+                                <kanban>
+                                    <field name="name"/>
+                                    <field name="is_required"/>
+                                    <field name="importance_level"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_kanban_global_click">
+                                                <strong><field name="name"/></strong>
+                                                <div t-if="record.is_required.raw_value">
+                                                    <span class="badge badge-primary">Obligatoire</span>
+                                                </div>
+                                                <div>
+                                                    Importance: <field name="importance_level"/>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </group>
+
+                        <!-- Compétences -->
+                        <group string="Compétences">
+                            <field name="competences" widget="many2many_kanban">
+                                <kanban>
+                                    <field name="name"/>
+                                    <field name="is_required"/>
+                                    <field name="importance_level"/>
+                                    <templates>
+                                        <t t-name="kanban-box">
+                                            <div class="oe_kanban_global_click">
+                                                <strong><field name="name"/></strong>
+                                                <div t-if="record.is_required.raw_value">
+                                                    <span class="badge badge-primary">Obligatoire</span>
+                                                </div>
+                                                <div>
+                                                    Importance: <field name="importance_level"/>
+                                                </div>
+                                            </div>
+                                        </t>
+                                    </templates>
+                                </kanban>
+                            </field>
+                        </group>
+                    </group>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>

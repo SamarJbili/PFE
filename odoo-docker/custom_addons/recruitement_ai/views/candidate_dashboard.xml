@@ -1,0 +1,65 @@
+<odoo>
+  <template id="candidate_dashboard" name="Tableau de bord Candidat">
+    <t t-call="website.layout">
+      <div class="container mt-4">
+        <h2>Mes Candidatures</h2>
+
+        <t t-if="applications">
+          <t t-foreach="applications" t-as="app">
+            <div class="card mb-3 p-3 shadow-sm">
+              <h4><t t-esc="app.job_id.name" /></h4>
+              <p><strong>Date :</strong> <t t-esc="app.create_date" /></p>
+
+              <!-- État basé sur la date de fin du poste -->
+              <p><strong>État :</strong>
+                <t t-if="app.job_id.date_fin_poste">
+                  <!-- Définir une variable pour savoir si l'application est en traitement -->
+                  <t t-set="en_traitement" t-value="app.job_id.date_fin_poste &lt;= datetime.datetime.now()"/>
+
+                  <t t-if="not en_traitement">
+                    <span class="badge bg-warning">En attente</span>
+                  </t>
+                  <t t-else="">
+                    <span class="badge bg-info">En traitement</span>
+                  </t>
+                </t>
+                <t t-else="">
+                  <t t-set="en_traitement" t-value="False"/>
+                  <span class="badge bg-warning">En attente</span>
+                </t>
+              </p>
+
+              <t t-if="app.cv_filename">
+                <p><strong>Nom du fichier CV :</strong> <t t-esc="app.cv_filename" /></p>
+              </t>
+
+              <div class="mt-2">
+                <!-- Afficher les boutons seulement si l'application n'est pas en traitement -->
+                <t t-if="not en_traitement">
+                  <!-- Utilisation de t-set pour générer l'URL proprement -->
+                  <t t-set="edit_url" t-value="'/my/applications/edit/%s' % app.id"/>
+                  <a t-att-href="edit_url" class="btn btn-sm btn-primary">Modifier</a>
+
+                  <!-- Utilisation de t-set pour générer l'URL de suppression -->
+                  <t t-set="delete_url" t-value="'/my/applications/delete/%s' % app.id"/>
+                  <a t-att-href="delete_url"
+                     class="btn btn-sm btn-danger"
+                     onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette candidature ?');">
+                    Supprimer
+                  </a>
+                </t>
+                <t t-else="">
+                  <p class="text-muted"><i>Les candidatures en traitement ne peuvent plus être modifiées ou supprimées.</i></p>
+                </t>
+              </div>
+            </div>
+          </t>
+        </t>
+
+        <t t-if="not applications">
+          <p>Vous n'avez encore postulé à aucun poste.</p>
+        </t>
+      </div>
+    </t>
+  </template>
+</odoo>

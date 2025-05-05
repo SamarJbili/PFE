@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_kanban_view_applicant_inherit" model="ir.ui.view">
+        <field name="name">hr.applicant.kanban.inherit</field>
+        <field name="model">hr.applicant</field>
+        <field name="inherit_id" ref="hr_recruitment.hr_kanban_view_applicant"/>
+        <field name="arch" type="xml">
+            <!-- Ajout du champ score dans les champs disponibles -->
+            <xpath expr="//field[@name='color']" position="after">
+                <field name="score"/>
+            </xpath>
+
+            <!-- Affichage du score après le job_id -->
+            <xpath expr="//field[@name='job_id']" position="after">
+                <div class="mt-2">
+                    <strong>Score: </strong><span><field name="score"/></span>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>

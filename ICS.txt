@@ -28,3 +28,5 @@ En structurant les tâches de cette manière, tu pourras non seulement décrire 
 Cela te semble-t-il plus clair et utile pour ton projet ?
 
 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
+
+serveur SMTP
